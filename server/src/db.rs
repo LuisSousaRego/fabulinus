@@ -2,7 +2,7 @@ use mongodb::bson::Document;
 use mongodb::{options::ClientOptions, Client};
 use std::env;
 
-pub async fn get_palavras_collection() -> mongodb::error::Result<mongodb::Collection<Document>> {
+async fn get_palavras_collection() -> mongodb::error::Result<mongodb::Collection<Document>> {
     let palavras_url = env::var("MONGO_PALAVRAS").unwrap();
     let mut client_options = ClientOptions::parse(palavras_url).await?;
     client_options.app_name = Some("Palavras".to_string());
@@ -11,3 +11,5 @@ pub async fn get_palavras_collection() -> mongodb::error::Result<mongodb::Collec
 
     Ok(db.collection::<Document>("palavrasCollection"))
 }
+
+pub async fn get_question_and_answers() {}

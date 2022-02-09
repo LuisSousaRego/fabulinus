@@ -8,3 +8,4 @@ edition = "2021"
 [dependencies]
 mongodb = "2.0.2"
 tokio = { version = "1.14.0", features = ["full"] }
+nickel = "*"

@@ -1,21 +1,41 @@
-#[macro_use]
-extern crate nickel;
-
-use nickel::{HttpRouter, MiddlewareResult, Nickel, Request, Response};
-use std::collections::HashMap;
-
 mod db;
+mod template;
 
-fn index<'a, D>(_: &mut Request<D>, res: Response<'a, D>) -> MiddlewareResult<'a, D> {
-    let mut data = HashMap::new();
-    data.insert("name", "joel");
-    return res.render("src/templates/index.html", &data);
+use crate::db::*;
+use crate::template::Context;
+use crate::template::index;
+use hyper::service::{make_service_fn, service_fn};
+use hyper::{Body, Request, Response, Server};
+use std::convert::Infallible;
+use tinytemplate::TinyTemplate;
+
+async fn hello(_: Request<Body>) -> Result<Response<Body>, Infallible> {
+    let r = get_question_and_answers().await;
+
+    let mut tt = TinyTemplate::new();
+
+    tt.add_template("hello", index()).unwrap();
+
+    let context = Context {
+        name: "piroca".to_string(),
+    };
+
+    let rendered = tt.render("hello", &context).unwrap();
+
+    Ok(Response::new(Body::from(rendered)))
 }
 
-fn main() {
-    let mut server = Nickel::new();
+#[tokio::main]
+pub async fn main() -> Result<(), Box<dyn std::error::Error + Send + Sync>> {
+    let make_svc = make_service_fn(|_conn| async { Ok::<_, Infallible>(service_fn(hello)) });
 
-    server.get("/", index);
+    let addr = ([127, 0, 0, 1], 3000).into();
 
-    server.listen("localhost:6767").unwrap();
+    let server = Server::bind(&addr).serve(make_svc);
+
+    println!("Listening on http://{}", addr);
+
+    server.await?;
+
+    Ok(())
 }
